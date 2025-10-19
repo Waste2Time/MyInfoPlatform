@@ -108,3 +108,32 @@ class FetchedItemRepository:
         else:
             rows = self._session.query(Item).order_by(Item.published_at.desc().nulls_last(), Item.fetched_at.desc()).offset(offset).limit(limit).all()
         return [r.to_dict() for r in rows]
+
+    def update_flags(self, item_id: str, fields: dict) -> bool:
+        """更新 item 的 is_read / is_starred 标记。fields 可包含 'is_read' 和/或 'is_starred'。
+
+        返回 True 表示成功更新，False 表示未找到对应条目。
+        """
+        allowed = {"is_read", "is_starred"}
+        to_set = {k: v for k, v in fields.items() if k in allowed}
+        if not to_set:
+            return False
+        if self._session is None:
+            with get_session() as session:
+                item = session.query(Item).filter(Item.id == item_id).one_or_none()
+                if not item:
+                    return False
+                for k, v in to_set.items():
+                    setattr(item, k, bool(v))
+                session.add(item)
+                session.commit()
+                return True
+        else:
+            item = self._session.query(Item).filter(Item.id == item_id).one_or_none()
+            if not item:
+                return False
+            for k, v in to_set.items():
+                setattr(item, k, bool(v))
+            self._session.add(item)
+            self._session.commit()
+            return True

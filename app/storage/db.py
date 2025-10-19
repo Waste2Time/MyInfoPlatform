@@ -5,7 +5,7 @@ from typing import Iterator
 from contextlib import contextmanager
 
 # Read configuration from environment. If DATABASE_URL is not set we fall back to a local sqlite file
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./dev.db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgres://postgres:16Postgres@localhost:5432/MyInfoPlatform")
 ECHO = os.getenv("SQL_ECHO", "False").lower() in ("1", "true", "yes")
 
 # Create engine and session factory

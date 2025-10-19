@@ -1,7 +1,7 @@
 """SQLAlchemy ORM models for MyInfoPlatform.
 Designed to work with PostgreSQL (JSON/UUID) but falls back to SQLite types where necessary.
 """
-from sqlalchemy import Column, String, Text, DateTime, Boolean, func, UniqueConstraint, ForeignKey
+from sqlalchemy import Column, String, Text, DateTime, Boolean, func, UniqueConstraint, ForeignKey, Integer
 from sqlalchemy.types import JSON
 from sqlalchemy.orm import relationship
 from app.storage.db import Base
@@ -23,6 +23,8 @@ class Source(Base):
     config = Column(JSON, nullable=True)
     last_fetch_at = Column(DateTime(timezone=True), nullable=True)
     enabled = Column(Boolean, nullable=False, default=True)
+    # 拉取间隔，以秒为单位。为空表示使用全局默认或由外部调度决定。
+    fetch_interval_seconds = Column(Integer, nullable=True)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
@@ -54,6 +56,10 @@ class Item(Base):
     fingerprint = Column(String(255), nullable=True, index=True)
     meta = Column(JSON, nullable=True)
 
+    # 新增已读/收藏标记
+    is_read = Column(Boolean, nullable=False, default=False)
+    is_starred = Column(Boolean, nullable=False, default=False)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
@@ -72,6 +78,8 @@ class Item(Base):
             "fetched_at": self.fetched_at,
             "fingerprint": self.fingerprint,
             "meta": self.meta,
+            "is_read": self.is_read,
+            "is_starred": self.is_starred,
         }
 
     def __repr__(self) -> str:  # pragma: no cover - trivial
